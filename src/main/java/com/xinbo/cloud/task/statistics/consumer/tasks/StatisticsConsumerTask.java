@@ -1,5 +1,6 @@
 package com.xinbo.cloud.task.statistics.consumer.tasks;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.EnumUtil;
 import cn.hutool.json.JSONUtil;
 import com.xinbo.cloud.common.constant.RocketMQTopic;
@@ -99,12 +100,12 @@ public class StatisticsConsumerTask implements RocketMQListener<String> {
         try {
             SportUserStatistics objSportUser = SportUserStatistics.builder().merchantCode(merchant.getMerchantCode()).dataNode(merchant.getDataNode())
                     .merchantName(merchant.getMerchantCode()).betMoney(0).payoutMoney(0).winMoney(0).transferOutMoney(0).userName(dto.getUserName())
-                    .transferInMoney(dto.getOperationMoney()).build();
+                    .transferInMoney(dto.getOperationMoney()).day(dto.getOperationDate()).build();
             if (dto.getOperationType() == MoneyChangeEnum.MoneyOut.getCode())
                 objSportUser.setTransferOutMoney(dto.getOperationMoney());
             if (dto.getOperationType() == MoneyChangeEnum.MoneyIn.getCode())
                 objSportUser.setTransferInMoney(dto.getOperationMoney());
-            int a = sportUserService.toStatistic(objSportUser);
+            int a = sportUserService.save(objSportUser);
         } catch (Exception ex) {
             log.error("更新体育用户报表中的转入转出金额信息失败，原始数据：" + JSONUtil.toJsonStr(dto), ex);
         }
@@ -121,12 +122,12 @@ public class StatisticsConsumerTask implements RocketMQListener<String> {
         try {
             SportMerchantStatistics objSportMerchant = SportMerchantStatistics.builder().merchantCode(merchant.getMerchantCode()).dataNode(merchant.getDataNode())
                     .merchantName(merchant.getMerchantCode()).betMoney(0).payoutMoney(0).winMoney(0).transferOutMoney(0)
-                    .transferInMoney(dto.getOperationMoney()).build();
+                    .transferInMoney(dto.getOperationMoney()).day(dto.getOperationDate()).build();
             if (dto.getOperationType() == MoneyChangeEnum.MoneyOut.getCode())
                 objSportMerchant.setTransferOutMoney(dto.getOperationMoney());
             if (dto.getOperationType() == MoneyChangeEnum.MoneyIn.getCode())
                 objSportMerchant.setTransferInMoney(dto.getOperationMoney());
-            int a = sportMerchantService.toStatistic(objSportMerchant);
+            int a = sportMerchantService.save(objSportMerchant);
         } catch (Exception ex) {
             log.error("更新体育商户报表中的转入转出金额信息失败，原始数据：" + JSONUtil.toJsonStr(dto), ex);
         }
