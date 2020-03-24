@@ -6,13 +6,17 @@ import cn.hutool.json.JSONUtil;
 import com.xinbo.cloud.common.constant.RocketMQTopic;
 import com.xinbo.cloud.common.domain.common.Merchant;
 import com.xinbo.cloud.common.domain.statistics.SportActiveUserStatistics;
+import com.xinbo.cloud.common.domain.statistics.SportBetTypeStatistics;
 import com.xinbo.cloud.common.domain.statistics.SportMerchantStatistics;
 import com.xinbo.cloud.common.domain.statistics.SportUserStatistics;
 import com.xinbo.cloud.common.dto.RocketMessage;
+import com.xinbo.cloud.common.dto.sport.SportBetDetailDto;
+import com.xinbo.cloud.common.dto.sport.SportBetDto;
 import com.xinbo.cloud.common.dto.statistics.SportActiveUserOperationDto;
 import com.xinbo.cloud.common.dto.statistics.UserBalanceOperationDto;
 import com.xinbo.cloud.common.enums.MoneyChangeEnum;
 import com.xinbo.cloud.common.enums.RocketMessageIdEnum;
+import com.xinbo.cloud.common.enums.SportBetTypeEnum;
 import com.xinbo.cloud.common.service.common.MerchantService;
 import com.xinbo.cloud.common.service.statistics.SportActiveUserStatisticsService;
 import com.xinbo.cloud.common.service.statistics.SportBetTypeStatisticsService;
@@ -26,9 +30,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import java.time.DateTimeException;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author 汉斯
@@ -39,10 +44,6 @@ import java.util.List;
 @Service
 @RocketMQMessageListener(nameServer = "${rocketmq.name-server}", topic = RocketMQTopic.STATISTICS_TOPIC, consumerGroup = "${rocketmq.producer-group}")
 public class StatisticsConsumerTask implements RocketMQListener<String> {
-    @Autowired
-    @Qualifier("merchantServiceImpl")
-    private MerchantService merchantService;
-
     @Autowired
     @Qualifier("sportActiveUserStatisticsServiceImpl")
     private SportActiveUserStatisticsService sportActiveUserService;
@@ -70,7 +71,7 @@ public class StatisticsConsumerTask implements RocketMQListener<String> {
             SportActiveUserStatistics objSportActiveUserStatistics = SportActiveUserStatistics.builder().merchantName(dto.getMerchantName())
                     .merchantCode(dto.getMerchantCode()).dataNode(dto.getDataNode()).userName(dto.getUserName())
                     .regIp(dto.getIp()).regTime(dto.getOperationTime()).loginCount(0)
-                            .device(dto.getDevice()).day(day).build();
+                    .device(dto.getDevice()).day(day).build();
             //如果是更新登录次数，要加入最后登录时间和最后登录IP
             if (messageIdEnum == RocketMessageIdEnum.Sport_ActiveUserLoginCount) {
                 objSportActiveUserStatistics.setLoginCount(1);
@@ -82,6 +83,11 @@ public class StatisticsConsumerTask implements RocketMQListener<String> {
             MoneyChangeEnum moneyChangeEnum = MoneyChangeEnum.valueOf(message.getMessageId());
             switch (moneyChangeEnum) {
                 case Lucky://投注
+                    SportBetDto sportBetDto = JsonUtil.fromJsonToObject(message.getMessageBody().toString(), SportBetDto.class);
+                    Date day = DateUtil.parse(DateUtil.format(sportBetDto.getSettleTime(), "yyyy-MM-dd"), "yyyy-MM-dd");
+                    updateSportBetTypeStatistics(sportBetDto, day);
+                    updateSportUserBetStatistics(sportBetDto, day);
+                    updateSportMerchantBetStatistics(sportBetDto, day);
                     break;
                 case MoneyIn://投注
                 case MoneyOut://投注
@@ -91,7 +97,6 @@ public class StatisticsConsumerTask implements RocketMQListener<String> {
                     break;
             }
         }
-
     }
 
     /**
@@ -133,6 +138,77 @@ public class StatisticsConsumerTask implements RocketMQListener<String> {
             sportMerchantService.save(objSportMerchant);
         } catch (Exception ex) {
             log.error("更新体育商户报表中的转入转出金额信息失败，原始数据：" + JSONUtil.toJsonStr(dto), ex);
+        }
+    }
+
+
+    /**
+     * 更新体育用户报表中的投注信息
+     *
+     * @param dto
+     */
+    void updateSportUserBetStatistics(SportBetDto dto, Date day) {
+        try {
+            SportUserStatistics objSportUser = SportUserStatistics.builder().merchantCode(dto.getMerchantNo()).dataNode(dto.getDataNode())
+                    .merchantName("测试")
+                    .userName(dto.getUserName()).day(day).transferOutMoney(0).transferInMoney(0)
+                    .betMoney(dto.getBetMoney())
+                    .payoutMoney(dto.getPayoutMoney())
+                    .winMoney(dto.getWinMoney())
+                    .build();
+            sportUserService.save(objSportUser);
+
+        } catch (Exception ex) {
+            log.error("更新体育用户报表中的转入转出金额信息失败，原始数据：" + JSONUtil.toJsonStr(dto), ex);
+        }
+    }
+
+    /**
+     * 更新体育商户报表中的投注信息
+     *
+     * @param dto
+     */
+    void updateSportMerchantBetStatistics(SportBetDto dto,Date day) {
+        try {
+            SportMerchantStatistics objSportMerchant = SportMerchantStatistics.builder().merchantCode(dto.getMerchantNo()).dataNode(dto.getDataNode())
+                    .merchantName("测试")
+                    .day(day).transferOutMoney(0).transferInMoney(0)
+                    .betMoney(dto.getBetMoney())
+                    .payoutMoney(dto.getPayoutMoney())
+                    .winMoney(dto.getWinMoney())
+                    .build();
+            sportMerchantService.save(objSportMerchant);
+        } catch (Exception ex) {
+            log.error("更新体育商户报表中的转入转出金额信息失败，原始数据：" + JSONUtil.toJsonStr(dto), ex);
+        }
+    }
+
+
+    /**
+     * 更新体育用户报表中的投注信息
+     *
+     * @param dto
+     */
+    void updateSportBetTypeStatistics(SportBetDto dto, Date day) {
+        try {
+            List<SportBetDetailDto> listDetailDto = dto.getList();
+            Map<Integer, List<SportBetDetailDto>> betTypeGroup = listDetailDto.stream().collect(Collectors.groupingBy(SportBetDetailDto::getBetType));
+            //当前只计算 单式投注
+            if (betTypeGroup.size() == listDetailDto.size()) {
+                Integer betType = betTypeGroup.keySet().stream().findFirst().get();
+                SportBetTypeStatistics objSportBetType = SportBetTypeStatistics.builder().merchantCode(dto.getMerchantNo()).dataNode(dto.getDataNode())
+                        .merchantName("测试")
+                        .day(day).betType(betType.toString()).betTypeName(SportBetTypeEnum.valueOf(betType).getMsg())
+                        .betUserCount(1).betUserNumber(betTypeGroup.size())
+                        .betMoney(0)
+                        .payoutMoney(dto.getPayoutMoney())
+                        .winMoney(dto.getWinMoney())
+                        .avgMoney(dto.getWinMoney())
+                        .build();
+                sportBetTypeService.save(objSportBetType);
+            }
+        } catch (Exception ex) {
+            log.error("更新体育用户报表中的转入转出金额信息失败，原始数据：" + JSONUtil.toJsonStr(dto), ex);
         }
     }
 }
