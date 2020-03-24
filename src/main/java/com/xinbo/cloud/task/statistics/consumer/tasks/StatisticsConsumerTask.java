@@ -1,5 +1,6 @@
 package com.xinbo.cloud.task.statistics.consumer.tasks;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.EnumUtil;
 import cn.hutool.json.JSONUtil;
 import com.xinbo.cloud.common.constant.RocketMQTopic;
@@ -8,7 +9,8 @@ import com.xinbo.cloud.common.domain.statistics.SportActiveUserStatistics;
 import com.xinbo.cloud.common.domain.statistics.SportMerchantStatistics;
 import com.xinbo.cloud.common.domain.statistics.SportUserStatistics;
 import com.xinbo.cloud.common.dto.RocketMessage;
-import com.xinbo.cloud.common.dto.common.UserBalanceOperationDto;
+import com.xinbo.cloud.common.dto.statistics.SportActiveUserOperationDto;
+import com.xinbo.cloud.common.dto.statistics.UserBalanceOperationDto;
 import com.xinbo.cloud.common.enums.MoneyChangeEnum;
 import com.xinbo.cloud.common.enums.RocketMessageIdEnum;
 import com.xinbo.cloud.common.service.common.MerchantService;
@@ -24,6 +26,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import java.time.DateTimeException;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -61,16 +65,19 @@ public class StatisticsConsumerTask implements RocketMQListener<String> {
         List<Object> listValues = EnumUtil.getFieldValues(RocketMessageIdEnum.class, "code");
         if (listValues.contains(message.getMessageId())) {
             RocketMessageIdEnum messageIdEnum = RocketMessageIdEnum.valueOf(message.getMessageId());
-            switch (messageIdEnum) {
-                case Sport_ActiveUserInto:
-                    SportActiveUserStatistics objSportActiveUserStatistics = JsonUtil.fromJsonToObject(message.getMessageBody().toString(), SportActiveUserStatistics.class);
-                    sportActiveUserService.insert(objSportActiveUserStatistics);
-                    break;
-                case Sport_ActiveUserLoginCount:
-                    SportActiveUserStatistics objUpdateLoginInfo = JsonUtil.fromJsonToObject(message.getMessageBody().toString(), SportActiveUserStatistics.class);
-                    sportActiveUserService.updateLoginInfo(objUpdateLoginInfo);
-                    break;
+            SportActiveUserOperationDto dto = JsonUtil.fromJsonToObject(message.getMessageBody().toString(), SportActiveUserOperationDto.class);
+            Date day = DateUtil.parse(DateUtil.format(dto.getOperationTime(), "yyyy-MM-dd"), "yyyy-MM-dd");
+            SportActiveUserStatistics objSportActiveUserStatistics = SportActiveUserStatistics.builder().merchantName(dto.getMerchantName())
+                    .merchantCode(dto.getMerchantCode()).dataNode(dto.getDataNode()).userName(dto.getUserName())
+                    .regIp(dto.getIp()).regTime(dto.getOperationTime()).loginCount(0)
+                            .device(dto.getDevice()).day(day).build();
+            //如果是更新登录次数，要加入最后登录时间和最后登录IP
+            if (messageIdEnum == RocketMessageIdEnum.Sport_ActiveUserLoginCount) {
+                objSportActiveUserStatistics.setLoginCount(1);
+                objSportActiveUserStatistics.setLastLoginIp(dto.getIp());
+                objSportActiveUserStatistics.setLastLoginTime(dto.getOperationTime());
             }
+            sportActiveUserService.save(objSportActiveUserStatistics);
         } else {
             MoneyChangeEnum moneyChangeEnum = MoneyChangeEnum.valueOf(message.getMessageId());
             switch (moneyChangeEnum) {
@@ -79,9 +86,8 @@ public class StatisticsConsumerTask implements RocketMQListener<String> {
                 case MoneyIn://投注
                 case MoneyOut://投注
                     UserBalanceOperationDto balanceOperationDto = JsonUtil.fromJsonToObject(message.getMessageBody().toString(), UserBalanceOperationDto.class);
-                    Merchant merchant = merchantService.getByMerchantCode(balanceOperationDto.getMerchantCode());
-                    updateSportUserTransferStatistics(balanceOperationDto, merchant);
-                    updateSportMerchantTransferStatistics(balanceOperationDto, merchant);
+                    updateSportUserTransferStatistics(balanceOperationDto);
+                    updateSportMerchantTransferStatistics(balanceOperationDto);
                     break;
             }
         }
@@ -92,19 +98,18 @@ public class StatisticsConsumerTask implements RocketMQListener<String> {
      * 更新体育用户报表中的转入转出金额信息
      *
      * @param dto
-     * @param merchant
      */
 //    @Async
-    void updateSportUserTransferStatistics(UserBalanceOperationDto dto, Merchant merchant) {
+    void updateSportUserTransferStatistics(UserBalanceOperationDto dto) {
         try {
-            SportUserStatistics objSportUser = SportUserStatistics.builder().merchantCode(merchant.getMerchantCode()).dataNode(merchant.getDataNode())
-                    .merchantName(merchant.getMerchantCode()).betMoney(0).payoutMoney(0).winMoney(0).transferOutMoney(0).userName(dto.getUserName())
+            SportUserStatistics objSportUser = SportUserStatistics.builder().merchantCode(dto.getMerchantCode()).dataNode(dto.getDataNode())
+                    .merchantName(dto.getMerchantName()).betMoney(0).payoutMoney(0).winMoney(0).transferOutMoney(0).userName(dto.getUserName())
                     .transferInMoney(dto.getOperationMoney()).day(dto.getOperationDate()).build();
             if (dto.getOperationType() == MoneyChangeEnum.MoneyOut.getCode())
                 objSportUser.setTransferOutMoney(dto.getOperationMoney());
             if (dto.getOperationType() == MoneyChangeEnum.MoneyIn.getCode())
                 objSportUser.setTransferInMoney(dto.getOperationMoney());
-            int a = sportUserService.save(objSportUser);
+            sportUserService.save(objSportUser);
         } catch (Exception ex) {
             log.error("更新体育用户报表中的转入转出金额信息失败，原始数据：" + JSONUtil.toJsonStr(dto), ex);
         }
@@ -114,19 +119,18 @@ public class StatisticsConsumerTask implements RocketMQListener<String> {
      * 更新体育商户报表中的转入转出金额信息
      *
      * @param dto
-     * @param merchant
      */
 //    @Async
-    void updateSportMerchantTransferStatistics(UserBalanceOperationDto dto, Merchant merchant) {
+    void updateSportMerchantTransferStatistics(UserBalanceOperationDto dto) {
         try {
-            SportMerchantStatistics objSportMerchant = SportMerchantStatistics.builder().merchantCode(merchant.getMerchantCode()).dataNode(merchant.getDataNode())
-                    .merchantName(merchant.getMerchantCode()).betMoney(0).payoutMoney(0).winMoney(0).transferOutMoney(0)
+            SportMerchantStatistics objSportMerchant = SportMerchantStatistics.builder().merchantCode(dto.getMerchantCode()).dataNode(dto.getDataNode())
+                    .merchantName(dto.getMerchantName()).betMoney(0).payoutMoney(0).winMoney(0).transferOutMoney(0)
                     .transferInMoney(dto.getOperationMoney()).day(dto.getOperationDate()).build();
             if (dto.getOperationType() == MoneyChangeEnum.MoneyOut.getCode())
                 objSportMerchant.setTransferOutMoney(dto.getOperationMoney());
             if (dto.getOperationType() == MoneyChangeEnum.MoneyIn.getCode())
                 objSportMerchant.setTransferInMoney(dto.getOperationMoney());
-            int a = sportMerchantService.save(objSportMerchant);
+            sportMerchantService.save(objSportMerchant);
         } catch (Exception ex) {
             log.error("更新体育商户报表中的转入转出金额信息失败，原始数据：" + JSONUtil.toJsonStr(dto), ex);
         }
