@@ -57,6 +57,6 @@ pagehelper:
 
 
 rocketmq:
-  name-server: 103.84.110.202:9876
+  name-server: 45.125.218.106:9876
   producer-group: statistics_rocketmq_consumer_group
   producer-timeout: 300000
