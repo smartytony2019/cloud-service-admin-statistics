@@ -1,4 +1,4 @@
-package com.xinbo.cloud.task.statistics.consumer.tasks;
+package com.xinbo.cloud.service.statistics.tasks;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.EnumUtil;
@@ -20,7 +20,6 @@ import com.xinbo.cloud.common.service.statistics.SportActiveUserStatisticsServic
 import com.xinbo.cloud.common.service.statistics.SportBetTypeStatisticsService;
 import com.xinbo.cloud.common.service.statistics.SportMerchantStatisticsService;
 import com.xinbo.cloud.common.service.statistics.SportUserStatisticsService;
-import com.xinbo.cloud.common.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
@@ -60,11 +59,11 @@ public class StatisticsConsumerTask implements RocketMQListener<String> {
 
     @Override
     public void onMessage(String str) {
-        RocketMessage message = JsonUtil.fromJsonToObject(str, RocketMessage.class);
+        RocketMessage message = JSONUtil.toBean(str, RocketMessage.class);
         List<Object> listValues = EnumUtil.getFieldValues(RocketMessageIdEnum.class, "code");
         if (listValues.contains(message.getMessageId())) {
             RocketMessageIdEnum messageIdEnum = RocketMessageIdEnum.valueOf(message.getMessageId());
-            SportActiveUserOperationDto dto = JsonUtil.fromJsonToObject(message.getMessageBody().toString(), SportActiveUserOperationDto.class);
+            SportActiveUserOperationDto dto = JSONUtil.toBean(message.getMessageBody().toString(), SportActiveUserOperationDto.class);
             Date day = DateUtil.parse(DateUtil.format(dto.getOperationTime(), "yyyy-MM-dd"), "yyyy-MM-dd");
             SportActiveUserStatistics objSportActiveUserStatistics = SportActiveUserStatistics.builder().merchantName(dto.getMerchantName())
                     .merchantCode(dto.getMerchantCode()).dataNode(dto.getDataNode()).userName(dto.getUserName())
@@ -81,7 +80,7 @@ public class StatisticsConsumerTask implements RocketMQListener<String> {
             MoneyChangeEnum moneyChangeEnum = MoneyChangeEnum.valueOf(message.getMessageId());
             switch (moneyChangeEnum) {
                 case Lucky://投注
-                    SportBetDto sportBetDto = JsonUtil.fromJsonToObject(message.getMessageBody().toString(), SportBetDto.class);
+                    SportBetDto sportBetDto = JSONUtil.toBean(message.getMessageBody().toString(), SportBetDto.class);
                     Date day = DateUtil.parse(DateUtil.format(sportBetDto.getSettleTime(), "yyyy-MM-dd"), "yyyy-MM-dd");
                     updateSportBetTypeStatistics(sportBetDto, day);
                     updateSportUserBetStatistics(sportBetDto, day);
@@ -89,7 +88,7 @@ public class StatisticsConsumerTask implements RocketMQListener<String> {
                     break;
                 case MoneyIn://投注
                 case MoneyOut://投注
-                    UserBalanceOperationDto balanceOperationDto = JsonUtil.fromJsonToObject(message.getMessageBody().toString(), UserBalanceOperationDto.class);
+                    UserBalanceOperationDto balanceOperationDto = JSONUtil.toBean(message.getMessageBody().toString(), UserBalanceOperationDto.class);
                     updateSportUserTransferStatistics(balanceOperationDto);
                     updateSportMerchantTransferStatistics(balanceOperationDto);
                     break;

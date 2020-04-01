@@ -1,11 +1,22 @@
 server:
   port: 13200
+  servlet:
+    context-path: /gw-sport-statistics
 ribbon:
   ReadTimeout: 60000
   ConnectTimeout: 60000
 spring:
   application:
-    name: cloud-task-statistics-consumer
+    name: cloud-service-statistics
+  cloud:
+    #熔断器
+    sentinel:
+      transport:
+        port: ${server.port}
+        dashboard: 103.84.110.202:8002
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
   datasource:
     #    url: jdbc:mysql://127.0.0.1:3306/spring-boot-demo?useUnicode=true&characterEncoding=UTF-8&useSSL=false&autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8
     url: jdbc:mysql://103.84.110.202:3306/cloud?useUnicode=true&characterEncoding=UTF-8&useSSL=false&autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8
@@ -30,13 +41,15 @@ spring:
       connection-timeout: 30000
 logging:
   level:
-    com.xkcoding: debug
-    com.xkcoding.orm.mybatis.MapperAndPage.mapper: trace
+    com.xinbo: debug
+  file:
+    max-size: 5MB
+  path: ./logs/
 mybatis:
   configuration:
     # 下划线转驼峰
     map-underscore-to-camel-case: true
-  mapper-locations: classpath:mappers/common/*.xml,classpath:mappers/sport/*.xml,classpath:mappers/lottery/*.xml
+  mapper-locations: classpath:mappers/common/*.xml,classpath:mappers/sport/*.xml,classpath:mappers/lottery/*.xml,classpath:mappers/statistics/*.xml
   type-aliases-package: com.xinbo.cloud.common.domain
 mapper:
   mappers:
@@ -52,8 +65,13 @@ pagehelper:
   helper-dialect: mysql
   reasonable: true
   params: count=countSql
-
-
+web:
+  #请求头
+  header-key: Authorization
+  #前缀
+  prefix: Bearer
+  #放行url多个用逗号隔开(如：/a,/b,/c)
+  ignore-url: /swagger-resources/**,/webjars/**,/v2/**,/swagger-ui.html/**,/configuration/**
 rocketmq:
   name-server: 103.84.110.202:9876
   producer-group: statistics_rocketmq_consumer_group
