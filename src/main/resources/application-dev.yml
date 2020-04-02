@@ -5,6 +5,10 @@ server:
 ribbon:
   ReadTimeout: 60000
   ConnectTimeout: 60000
+#开启熔断器
+feign:
+  sentinel:
+    enabled: true
 spring:
   application:
     name: cloud-service-statistics
