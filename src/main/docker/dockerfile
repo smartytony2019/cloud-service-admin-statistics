@@ -1,0 +1,5 @@
+FROM openjdk:8-jdk
+VOLUME /tmp
+ADD cloud-service-admin-statistics.jar app.jar
+EXPOSE 13200
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-Dspring.profiles.active=prod","-jar","/app.jar"]
