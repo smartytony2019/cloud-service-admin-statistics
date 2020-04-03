@@ -1,7 +1,7 @@
 server:
   port: 13200
   servlet:
-    context-path: /gw-statistics
+    context-path: /gw-admin-statistics
 ribbon:
   ReadTimeout: 60000
   ConnectTimeout: 60000
