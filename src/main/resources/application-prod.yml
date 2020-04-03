@@ -1,7 +1,7 @@
 server:
   port: 13200
   servlet:
-    context-path: /gw-sport-statistics
+    context-path: /gw-statistics
 ribbon:
   ReadTimeout: 60000
   ConnectTimeout: 60000
@@ -11,7 +11,7 @@ feign:
     enabled: true
 spring:
   application:
-    name: cloud-service-statistics
+    name: cloud-service-admin-statistics
   cloud:
     #熔断器
     sentinel:

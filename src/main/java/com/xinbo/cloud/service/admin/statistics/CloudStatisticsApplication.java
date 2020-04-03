@@ -1,4 +1,4 @@
-package com.xinbo.cloud.service.statistics;
+package com.xinbo.cloud.service.admin.statistics;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

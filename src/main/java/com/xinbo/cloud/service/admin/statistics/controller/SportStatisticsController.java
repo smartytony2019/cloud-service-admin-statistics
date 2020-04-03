@@ -1,4 +1,4 @@
-package com.xinbo.cloud.service.statistics.controller;
+package com.xinbo.cloud.service.admin.statistics.controller;
 
 import com.xinbo.cloud.common.annotations.JwtIgnore;
 import com.xinbo.cloud.common.dto.ActionResult;

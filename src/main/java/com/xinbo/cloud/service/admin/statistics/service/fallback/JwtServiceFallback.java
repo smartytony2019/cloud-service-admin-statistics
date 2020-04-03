@@ -1,10 +1,10 @@
-package com.xinbo.cloud.service.statistics.service.fallback;
+package com.xinbo.cloud.service.admin.statistics.service.fallback;
 
 import com.xinbo.cloud.common.constant.FallbackMessage;
 import com.xinbo.cloud.common.dto.ActionResult;
 import com.xinbo.cloud.common.dto.JwtUser;
 import com.xinbo.cloud.common.dto.ResultFactory;
-import com.xinbo.cloud.service.statistics.service.JwtService;
+import com.xinbo.cloud.service.admin.statistics.service.JwtService;
 import org.springframework.stereotype.Component;
 
 import java.text.MessageFormat;

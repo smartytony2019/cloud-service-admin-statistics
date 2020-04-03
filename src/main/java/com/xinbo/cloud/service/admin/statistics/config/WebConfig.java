@@ -1,4 +1,4 @@
-package com.xinbo.cloud.service.statistics.config;
+package com.xinbo.cloud.service.admin.statistics.config;
 
 
 import lombok.Data;

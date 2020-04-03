@@ -1,8 +1,8 @@
-package com.xinbo.cloud.service.statistics.service;
+package com.xinbo.cloud.service.admin.statistics.service;
 
 import com.xinbo.cloud.common.dto.ActionResult;
 import com.xinbo.cloud.common.dto.JwtUser;
-import com.xinbo.cloud.service.statistics.service.fallback.JwtServiceFallback;
+import com.xinbo.cloud.service.admin.statistics.service.fallback.JwtServiceFallback;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

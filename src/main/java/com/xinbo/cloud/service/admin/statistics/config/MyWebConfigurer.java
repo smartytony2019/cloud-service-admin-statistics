@@ -1,10 +1,10 @@
-package com.xinbo.cloud.service.statistics.config;
+package com.xinbo.cloud.service.admin.statistics.config;
 
 import cn.hutool.core.util.StrUtil;
 import com.xinbo.cloud.common.annotations.JwtIgnore;
 import com.xinbo.cloud.common.constant.ApiStatus;
 import com.xinbo.cloud.common.dto.ActionResult;
-import com.xinbo.cloud.service.statistics.service.JwtService;
+import com.xinbo.cloud.service.admin.statistics.service.JwtService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;

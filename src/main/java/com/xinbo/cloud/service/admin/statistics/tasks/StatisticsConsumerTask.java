@@ -1,4 +1,4 @@
-package com.xinbo.cloud.service.statistics.tasks;
+package com.xinbo.cloud.service.admin.statistics.tasks;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.EnumUtil;
