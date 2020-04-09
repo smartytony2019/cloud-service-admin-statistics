@@ -45,7 +45,7 @@ public class SportStatisticsController {
     @Qualifier("sportUserStatisticsServiceImpl")
     private SportUserStatisticsService sportUserService;
 
-    @ApiOperation(value = "分页获取活跃用户登录报表数据", notes = "")
+    @ApiOperation(value = "分页获取体育活跃用户登录报表数据", notes = "")
     @PostMapping("getActiveUserStatisticsPage")
     @JwtIgnore
     public ActionResult getActiveUserStatisticsPage(@RequestBody PageVo<SportActiveUserStatisticsSearchVo> pageVo) {

@@ -2,7 +2,7 @@ package com.xinbo.cloud.service.admin.statistics.config;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
-import com.alibaba.dubbo.config.annotation.Reference;
+import org.apache.dubbo.config.annotation.Reference;
 import com.xinbo.cloud.common.annotations.JwtIgnore;
 import com.xinbo.cloud.common.constant.CacheConfig;
 import com.xinbo.cloud.common.dto.JwtUser;
@@ -77,7 +77,7 @@ public class MyWebConfigurer implements WebMvcConfigurer {
             //判读redis认证是否过期
             String jwtKey = MessageFormat.format(CacheConfig.USER_JWT_KEY, DigestUtil.md5Hex(jwtUser.getUsername()));
             String userJson = redisServiceApi.stringGet(jwtKey);
-            if (StrUtil.isBlank(userJson) || userJson.equals("null")) {
+            if (StrUtil.isBlank(userJson)) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                 return false;
             }
