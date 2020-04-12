@@ -147,7 +147,7 @@ public class StatisticsConsumerTask implements RocketMQListener<String> {
     void updateSportUserBetStatistics(SportBetDto dto, Date day) {
         try {
             SportUserStatistics objSportUser = SportUserStatistics.builder().merchantCode(dto.getMerchantNo()).dataNode(dto.getDataNode())
-                    .merchantName("测试")
+                    .merchantName(dto.getMerchantName())
                     .userName(dto.getUserName()).day(day).transferOutMoney(0).transferInMoney(0)
                     .betMoney(dto.getBetMoney())
                     .payoutMoney(dto.getPayoutMoney())
@@ -168,7 +168,7 @@ public class StatisticsConsumerTask implements RocketMQListener<String> {
     void updateSportMerchantBetStatistics(SportBetDto dto,Date day) {
         try {
             SportMerchantStatistics objSportMerchant = SportMerchantStatistics.builder().merchantCode(dto.getMerchantNo()).dataNode(dto.getDataNode())
-                    .merchantName("测试")
+                    .merchantName(dto.getMerchantName())
                     .day(day).transferOutMoney(0).transferInMoney(0)
                     .betMoney(dto.getBetMoney())
                     .payoutMoney(dto.getPayoutMoney())
@@ -194,7 +194,7 @@ public class StatisticsConsumerTask implements RocketMQListener<String> {
             if (betTypeGroup.size() == listDetailDto.size()) {
                 Integer betType = betTypeGroup.keySet().stream().findFirst().get();
                 SportBetTypeStatistics objSportBetType = SportBetTypeStatistics.builder().merchantCode(dto.getMerchantNo()).dataNode(dto.getDataNode())
-                        .merchantName("测试")
+                        .merchantName(dto.getMerchantName())
                         .day(day).betType(betType.toString()).betTypeName(SportBetTypeEnum.valueOf(betType).getMsg())
                         .betUserCount(1).betUserNumber(betTypeGroup.size())
                         .betMoney(0)
