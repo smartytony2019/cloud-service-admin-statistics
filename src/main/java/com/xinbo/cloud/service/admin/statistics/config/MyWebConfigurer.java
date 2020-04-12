@@ -70,7 +70,7 @@ public class MyWebConfigurer implements WebMvcConfigurer {
             // token解析
             JwtUser jwtUser = oAuthServiceApi.parseToken(token);
             //认证失败
-            if (jwtUser != null) {
+            if (jwtUser == null) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                 return false;
             }
