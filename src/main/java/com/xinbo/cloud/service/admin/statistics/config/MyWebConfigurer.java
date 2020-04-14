@@ -75,13 +75,12 @@ public class MyWebConfigurer implements WebMvcConfigurer {
                 return false;
             }
             //判读redis认证是否过期
-            String jwtKey = MessageFormat.format(CacheConfig.USER_JWT_KEY, DigestUtil.md5Hex(jwtUser.getUsername()));
+            String jwtKey = MessageFormat.format(CacheConfig.PREFIx_BASE_USER_FORMAT, jwtUser.getUsername());
             String userJson = redisServiceApi.stringGet(jwtKey);
             if (StrUtil.isBlank(userJson)) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                 return false;
             }
-            redisServiceApi.expire(ExpireVo.builder().expire(CacheConfig.ONE_HOUR).key(jwtKey).build());
             request.setAttribute("jwtUser", jwtUser);
             return true;
         }
