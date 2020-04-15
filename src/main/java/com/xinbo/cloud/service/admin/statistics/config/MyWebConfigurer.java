@@ -1,7 +1,7 @@
 package com.xinbo.cloud.service.admin.statistics.config;
 
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.crypto.digest.DigestUtil;
+import com.xinbo.cloud.common.enums.RoleTypeEnum;
 import org.apache.dubbo.config.annotation.Reference;
 import com.xinbo.cloud.common.annotations.JwtIgnore;
 import com.xinbo.cloud.common.constant.CacheConfig;
@@ -18,7 +18,6 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.text.MessageFormat;
@@ -69,22 +68,21 @@ public class MyWebConfigurer implements WebMvcConfigurer {
 
             // token解析
             JwtUser jwtUser = oAuthServiceApi.parseToken(token);
-            //认证失败
-            if (jwtUser == null) {
+            //认证失败      如果得到的JWT是前端用户，说明是非法的token
+            if (jwtUser == null || jwtUser.getRoleType() == RoleTypeEnum.Member.getCode()) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                 return false;
             }
-            //如果得到的JWT是前端用户，说明是非法的token
-            if (jwtUser.getUserType() == 1) {
+
+            //user:jwt:member:xxxx  会员  redis key
+            //user:jwt:admin:xxxx  管理员 redis key
+            RoleTypeEnum roleTypeEnum = RoleTypeEnum.valueOf(jwtUser.getRoleType());
+            String jwtKey = MessageFormat.format(CacheConfig.USER_JWT_KEY, roleTypeEnum.getKey(), jwtUser.getUsername());
+            if (!redisServiceApi.hasKey(jwtKey)) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                 return false;
             }
-            //判读redis认证是否过期
-            String jwtKey = MessageFormat.format(CacheConfig.PREFIx_BASE_USER_FORMAT, jwtUser.getUsername());
-            if (StrUtil.isBlank(redisServiceApi.stringGet(jwtKey))) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-                return false;
-            }
+            redisServiceApi.expire(ExpireVo.builder().expire(CacheConfig.ONE_HOUR).key(jwtKey).build());
             request.setAttribute("jwtUser", jwtUser);
             return true;
         }
