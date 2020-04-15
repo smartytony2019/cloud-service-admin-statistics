@@ -74,10 +74,14 @@ public class MyWebConfigurer implements WebMvcConfigurer {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                 return false;
             }
+            //如果得到的JWT是前端用户，说明是非法的token
+            if (jwtUser.getUserType() == 1) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                return false;
+            }
             //判读redis认证是否过期
             String jwtKey = MessageFormat.format(CacheConfig.PREFIx_BASE_USER_FORMAT, jwtUser.getUsername());
-            String userJson = redisServiceApi.stringGet(jwtKey);
-            if (StrUtil.isBlank(userJson)) {
+            if (StrUtil.isBlank(redisServiceApi.stringGet(jwtKey))) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                 return false;
             }
