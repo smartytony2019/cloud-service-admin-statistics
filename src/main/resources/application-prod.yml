@@ -37,6 +37,8 @@ logging:
     com.xinbo: debug
   file:
     max-size: 5MB
+    name: ./logs/${spring.application.name}.log
+    max-history: 10
 mybatis:
   configuration:
     # 下划线转驼峰
