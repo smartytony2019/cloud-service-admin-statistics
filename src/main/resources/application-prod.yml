@@ -6,13 +6,13 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 192.168.30.150:8848
+        server-addr: 192.168.30.88:8848
     sentinel:
       transport:
-        dashboard: 192.168.30.150:8080
+        dashboard: 192.168.30.88:8002
   datasource:
-    #    url: jdbc:mysql://192.168.30.150:3306/spring-boot-demo?useUnicode=true&characterEncoding=UTF-8&useSSL=false&autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8
-    url: jdbc:mysql://192.168.30.150:3306/cloud_admin_statistics?useUnicode=true&characterEncoding=UTF-8&useSSL=false&autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8
+    #    url: jdbc:mysql://192.168.30.88:3306/spring-boot-demo?useUnicode=true&characterEncoding=UTF-8&useSSL=false&autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8
+    url: jdbc:mysql://192.168.30.88:3306/cloud_admin_statistics?useUnicode=true&characterEncoding=UTF-8&useSSL=false&autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8
     username: root
     password: xinbo123321
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -69,10 +69,10 @@ dubbo:
     check: false
     generic: false
   registry:
-    address: nacos://192.168.30.150:8848
+    address: nacos://192.168.30.88:8848
     check: false
 rocketmq:
-  name-server: 192.168.30.150:9876
+  name-server: 192.168.30.88:9876
   producer-group: statistics_rocketmq_consumer_group
   producer-timeout: 300000
 web:
