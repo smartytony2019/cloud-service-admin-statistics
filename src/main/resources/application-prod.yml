@@ -7,9 +7,6 @@ spring:
     nacos:
       discovery:
         server-addr: 192.168.30.88:8848
-    sentinel:
-      transport:
-        dashboard: 192.168.30.88:8002
   datasource:
     #    url: jdbc:mysql://192.168.30.88:3306/spring-boot-demo?useUnicode=true&characterEncoding=UTF-8&useSSL=false&autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8
     url: jdbc:mysql://192.168.30.88:3306/cloud_admin_statistics?useUnicode=true&characterEncoding=UTF-8&useSSL=false&autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8
@@ -67,7 +64,6 @@ dubbo:
     port: -1
   consumer:
     check: false
-    generic: false
   registry:
     address: nacos://192.168.30.88:8848
     check: false
