@@ -4,7 +4,6 @@ import com.xinbo.cloud.common.service.statistics.SportActiveUserStatisticsServic
 import com.xinbo.cloud.common.service.statistics.SportBetTypeStatisticsService;
 import com.xinbo.cloud.common.service.statistics.SportMerchantStatisticsService;
 import com.xinbo.cloud.common.service.statistics.SportUserStatisticsService;
-import com.xinbo.cloud.common.annotations.JwtIgnore;
 import com.xinbo.cloud.common.dto.ActionResult;
 import com.xinbo.cloud.common.dto.ResultFactory;
 import com.xinbo.cloud.common.vo.PageVo;
@@ -47,28 +46,24 @@ public class SportStatisticsController {
 
     @ApiOperation(value = "分页获取体育活跃用户登录报表数据", notes = "")
     @PostMapping("getActiveUserStatisticsPage")
-    @JwtIgnore
     public ActionResult getActiveUserStatisticsPage(@RequestBody PageVo<SportActiveUserStatisticsSearchVo> pageVo) {
         return ResultFactory.success(sportActiveUserService.getListPage(pageVo));
     }
 
     @ApiOperation(value = "分页获取体育投注类型报表数据", notes = "")
     @PostMapping("getBetTypeStatisticsPage")
-    @JwtIgnore
     public ActionResult getBetTypeStatisticsPage(@RequestBody PageVo<SportBetTypeStatisticsSearchVo> pageVo) {
         return ResultFactory.success(sportBetTypeService.getListPage(pageVo));
     }
 
     @ApiOperation(value = "分页获取体育商户报表数据", notes = "")
     @PostMapping("getMerchantStatisticsPage")
-    @JwtIgnore
     public ActionResult getMerchantStatisticsPage(@RequestBody PageVo<SportMerchantStatisticsSearchVo> pageVo) {
         return ResultFactory.success(sportMerchantService.getListPage(pageVo));
     }
 
     @ApiOperation(value = "分页获取体育用户报表数据", notes = "")
     @PostMapping("getUserStatisticsPage")
-    @JwtIgnore
     public ActionResult getUserStatisticsPage(@RequestBody PageVo<SportUserStatisticsSearchVo> pageVo) {
         return ResultFactory.success(sportUserService.getListPage(pageVo));
     }
