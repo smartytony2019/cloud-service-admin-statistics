@@ -16,10 +16,6 @@ spring:
     type: com.zaxxer.hikari.HikariDataSource
     initialization-mode: always
     continue-on-error: true
-    #    schema:
-    #      - "classpath:db/schema.sql"
-    #    data:
-    #      - "classpath:db/data.sql"
     hikari:
       minimum-idle: 5
       connection-test-query: SELECT 1 FROM DUAL
