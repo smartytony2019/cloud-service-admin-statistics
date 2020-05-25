@@ -4,22 +4,16 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.EnumUtil;
 import cn.hutool.json.JSONUtil;
 import com.xinbo.cloud.common.constant.RocketMQTopic;
-import com.xinbo.cloud.common.domain.statistics.SportActiveUserStatistics;
-import com.xinbo.cloud.common.domain.statistics.SportBetTypeStatistics;
-import com.xinbo.cloud.common.domain.statistics.SportMerchantStatistics;
-import com.xinbo.cloud.common.domain.statistics.SportUserStatistics;
+import com.xinbo.cloud.common.domain.statistics.*;
 import com.xinbo.cloud.common.dto.RocketMessage;
 import com.xinbo.cloud.common.dto.sport.SportBetDetailDto;
 import com.xinbo.cloud.common.dto.sport.SportBetDto;
-import com.xinbo.cloud.common.dto.statistics.SportActiveUserOperationDto;
+import com.xinbo.cloud.common.dto.statistics.ActiveUserOperationDto;
 import com.xinbo.cloud.common.dto.statistics.UserBalanceOperationDto;
 import com.xinbo.cloud.common.enums.MoneyChangeEnum;
 import com.xinbo.cloud.common.enums.RocketMessageIdEnum;
 import com.xinbo.cloud.common.enums.SportBetTypeEnum;
-import com.xinbo.cloud.common.service.statistics.SportActiveUserStatisticsService;
-import com.xinbo.cloud.common.service.statistics.SportBetTypeStatisticsService;
-import com.xinbo.cloud.common.service.statistics.SportMerchantStatisticsService;
-import com.xinbo.cloud.common.service.statistics.SportUserStatisticsService;
+import com.xinbo.cloud.common.service.statistics.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
@@ -57,25 +51,61 @@ public class StatisticsConsumerTask implements RocketMQListener<String> {
     @Qualifier("sportUserStatisticsServiceImpl")
     private SportUserStatisticsService sportUserService;
 
+
+    @Autowired
+    @Qualifier("lotteryActiveUserStatisticsServiceImpl")
+    private LotteryActiveUserStatisticsService lotteryActiveUserService;
+
+    @Autowired
+    @Qualifier("lotteryTypeStatisticsServiceImpl")
+    private LotteryTypeStatisticsService lotteryTypeService;
+
+    @Autowired
+    @Qualifier("lotteryMerchantStatisticsServiceImpl")
+    private LotteryMerchantStatisticsService lotteryMerchantService;
+
+    @Autowired
+    @Qualifier("lotteryUserStatisticsServiceImpl")
+    private LotteryUserStatisticsService lotteryUserService;
+
     @Override
     public void onMessage(String str) {
         RocketMessage message = JSONUtil.toBean(str, RocketMessage.class);
         List<Object> listValues = EnumUtil.getFieldValues(RocketMessageIdEnum.class, "code");
         if (listValues.contains(message.getMessageId())) {
             RocketMessageIdEnum messageIdEnum = RocketMessageIdEnum.valueOf(message.getMessageId());
-            SportActiveUserOperationDto dto = JSONUtil.toBean(message.getMessageBody().toString(), SportActiveUserOperationDto.class);
+            ActiveUserOperationDto dto = JSONUtil.toBean(message.getMessageBody().toString(), ActiveUserOperationDto.class);
             Date day = DateUtil.parse(DateUtil.format(dto.getOperationTime(), "yyyy-MM-dd"), "yyyy-MM-dd");
-            SportActiveUserStatistics objSportActiveUserStatistics = SportActiveUserStatistics.builder().merchantName(dto.getMerchantName())
-                    .merchantCode(dto.getMerchantCode()).dataNode(dto.getDataNode()).userName(dto.getUserName())
-                    .regIp(dto.getIp()).regTime(dto.getOperationTime()).loginCount(0)
-                    .device(dto.getDevice()).day(day).build();
-            //如果是更新登录次数，要加入最后登录时间和最后登录IP
-            if (messageIdEnum == RocketMessageIdEnum.Sport_ActiveUserLoginCount) {
-                objSportActiveUserStatistics.setLoginCount(1);
-                objSportActiveUserStatistics.setLastLoginIp(dto.getIp());
-                objSportActiveUserStatistics.setLastLoginTime(dto.getOperationTime());
+            switch (messageIdEnum) {
+                case Sport_ActiveUserInto://投注
+                case Sport_ActiveUserLoginCount://投注
+                    SportActiveUserStatistics objSportActiveUserStatistics = SportActiveUserStatistics.builder().merchantName(dto.getMerchantName())
+                            .merchantCode(dto.getMerchantCode()).dataNode(dto.getDataNode()).userName(dto.getUserName())
+                            .regIp(dto.getIp()).regTime(dto.getOperationTime()).loginCount(0)
+                            .device(dto.getDevice()).day(day).build();
+                    //如果是更新登录次数，要加入最后登录时间和最后登录IP
+                    if (messageIdEnum == RocketMessageIdEnum.Sport_ActiveUserLoginCount) {
+                        objSportActiveUserStatistics.setLoginCount(1);
+                        objSportActiveUserStatistics.setLastLoginIp(dto.getIp());
+                        objSportActiveUserStatistics.setLastLoginTime(dto.getOperationTime());
+                    }
+                    sportActiveUserService.save(objSportActiveUserStatistics);
+                    break;
+                case Lottery_ActiveUserInto://投注
+                case Lottery_ActiveUserLoginCount://投注
+                    LotteryActiveUserStatistics objLotteryActiveUserStatistics = LotteryActiveUserStatistics.builder().merchantName(dto.getMerchantName())
+                            .merchantCode(dto.getMerchantCode()).dataNode(dto.getDataNode()).userName(dto.getUserName())
+                            .regIp(dto.getIp()).regTime(dto.getOperationTime()).loginCount(0)
+                            .device(dto.getDevice()).day(day).build();
+                    //如果是更新登录次数，要加入最后登录时间和最后登录IP
+                    if (messageIdEnum == RocketMessageIdEnum.Sport_ActiveUserLoginCount) {
+                        objLotteryActiveUserStatistics.setLoginCount(1);
+                        objLotteryActiveUserStatistics.setLastLoginIp(dto.getIp());
+                        objLotteryActiveUserStatistics.setLastLoginTime(dto.getOperationTime());
+                    }
+                    lotteryActiveUserService.save(objLotteryActiveUserStatistics);
+                    break;
             }
-            sportActiveUserService.save(objSportActiveUserStatistics);
         } else {
             MoneyChangeEnum moneyChangeEnum = MoneyChangeEnum.valueOf(message.getMessageId());
             switch (moneyChangeEnum) {
@@ -165,7 +195,7 @@ public class StatisticsConsumerTask implements RocketMQListener<String> {
      *
      * @param dto
      */
-    void updateSportMerchantBetStatistics(SportBetDto dto,Date day) {
+    void updateSportMerchantBetStatistics(SportBetDto dto, Date day) {
         try {
             SportMerchantStatistics objSportMerchant = SportMerchantStatistics.builder().merchantCode(dto.getMerchantNo()).dataNode(dto.getDataNode())
                     .merchantName(dto.getMerchantName())
